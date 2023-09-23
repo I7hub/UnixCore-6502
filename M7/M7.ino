@@ -17,6 +17,7 @@ const char DATA_PIN[] = {23, 25, 27, 29, 31, 33, 35, 37};
 byte stack[256];
 byte zeropage[256];
 byte freeram[24064];
+byte rom[32768];
 
 boolean OPB[8]; // Output Port B
 boolean OPA[8]; // Output Port A
@@ -50,10 +51,20 @@ void setup() {
   memset(zeropage, 0x00, sizeof(byte)*256);
   memset(stack, 0x00, sizeof(byte)*256);
   memset(freeram, 0x00, sizeof(byte)*24064);
+  memset(rom, 0x00, sizeof(byte)*32768);
   memset(OPB, 0, sizeof(boolean)*8);
   memset(OPA, 0, sizeof(boolean)*8);
   memset(IPB, 0, sizeof(boolean)*8);
   memset(IPA, 0, sizeof(boolean)*8);
+
+  for(int i = 0; i < DIMPROG; i++) {
+
+    rom[i] = PROG[i];
+
+  }
+
+  rom[32765] = 0x80;
+  rom[32764] = 0x00;
 
   OLD_RW = 'W';
 
@@ -61,25 +72,6 @@ void setup() {
 
   Serial.begin(9600);
 
-}
-
-void check_RESET(unsigned int address) { // OK
-  
-  if (address == 0xFFFC) { 
-    
-    for (int i = 0; i < 8; i++) {  
-      
-      digitalWrite(DATA_PIN[i], LOW); // 0x00 for 0xFFFC
-      
-    }    
-    
-  } else if (address == 0xFFFD) {
-    
-    digitalWrite(DATA_PIN[0], HIGH); // 0x80 for 0xFFFD
-    hexData = 0x80;
-    
-  }
-  
 }
 
 void check_RW() { // OK
@@ -241,8 +233,6 @@ void loop() {
     
     }
 
-    check_RESET(address);
-
     if ((address >= 0x0000) && (address <= 0x00FF)) {
 
       RW_mem(address, 0x0000, zeropage);
@@ -259,10 +249,10 @@ void loop() {
 
       IN_OUT(address);
     
-    } else if ((address >= 0x8000) && (address < 0x8000+DIMPROG)) {
+    } else if ((address >= 0x8000) && (address <= 0xFFFF)) {
     
       int offset = address - 0x8000;
-      decoding(PROG[offset]);
+      decoding(rom[offset]);
     
     }
 
