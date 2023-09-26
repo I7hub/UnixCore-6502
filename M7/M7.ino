@@ -78,25 +78,19 @@ void check_RW() { // OK
   
   RW = digitalRead(READ_WRITE_PIN) ? 'r' : 'W';
   
-  if ((RW == 'W') && (OLD_RW != 'W')) {
+  if ((RW == 'W') && (OLD_RW != 'W')) { // INPUT
    
-    for (int i = 0; i < 8; i++) {  
-      
-      pinMode(DATA_PIN[i], INPUT);
-      
-    }
+    GPIOJ->MODER = 0x00010000; // OK
+    GPIOG->MODER = 0x00000000; // OK
     
     OLD_RW = RW;
     
   }
   
-  if ((RW == 'r') && (OLD_RW != 'r')) {
+  if ((RW == 'r') && (OLD_RW != 'r')) { // OUTPUT
     
-    for (int i = 0; i < 8; i++) {  
-      
-      pinMode(DATA_PIN[i], OUTPUT);
-      
-    }
+    GPIOJ->MODER = 0x00011555; // OK
+    GPIOG->MODER = 0x04000000; // OK
     
     OLD_RW = RW;
     
@@ -218,6 +212,7 @@ void loop() {
 
   if( statusBit == 1 ) {
 
+    long int t1 = micros();
     statusBit = 0;
 
     char output[15];
@@ -256,6 +251,9 @@ void loop() {
     
     }
 
+    long int t2 = micros();
+    Serial.print(t2-t1);
+
     if ( RW == 'W' ) {
 
       for(int i = 0; i < DATAN; i++) {
@@ -267,7 +265,7 @@ void loop() {
     
     }
 
-    sprintf(output, "%04x %c %02x", address, RW, hexData);
+    sprintf(output, " %04x %c %02x", address, RW, hexData);
     Serial.println(output);
     hexData = 0;
 
