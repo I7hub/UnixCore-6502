@@ -3,13 +3,13 @@
 
 #include <RPC.h>
 
-#define ADDRN 16
-#define CLOCK 2
-#define DATAN 8
-#define READ_WRITE_PIN 3
-#define DIMPROG 19
+#define AddressPins 16
+#define ClockSigIN 2
+#define DataPins 8
+#define PinRW 3
+#define ProgramDIM 19
 
-const byte PROG[DIMPROG] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0x20, 0x0b, 0x80, 0x4c, 0x08, 0x80, 0x48, 0xa9, 0x50, 0x8d, 0x00, 0x60, 0x68, 0x60};
+const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0x20, 0x0b, 0x80, 0x4c, 0x08, 0x80, 0x48, 0xa9, 0x50, 0x8d, 0x00, 0x60, 0x68, 0x60};
 
 const char ADDR_PIN[] = {22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
 const char DATA_PIN[] = {23, 25, 27, 29, 31, 33, 35, 37};
@@ -37,14 +37,14 @@ boolean statusBit = 0;
 void setup() {
 
   RPC.begin();
-  pinMode(CLOCK, INPUT);
-  pinMode(READ_WRITE_PIN, INPUT);
+  pinMode(ClockSigIN, INPUT);
+  pinMode(PinRW, INPUT);
 
-  for(int i = 0; i < ADDRN; i++) {
+  for(int i = 0; i < AddressPins; i++) {
       pinMode(ADDR_PIN[i],INPUT);
   }
 
-  for(int i = 0; i < DATAN; i++) {
+  for(int i = 0; i < DataPins; i++) {
       pinMode(DATA_PIN[i],INPUT);
   }
   
@@ -57,18 +57,14 @@ void setup() {
   memset(IPB, 0, sizeof(boolean)*8);
   memset(IPA, 0, sizeof(boolean)*8);
 
-  for(int i = 0; i < DIMPROG; i++) {
-
-    rom[i] = PROG[i];
-
-  }
+  memcpy(rom, UnixCore6502, sizeof(byte)*ProgramDIM);
 
   rom[32765] = 0x80;
   rom[32764] = 0x00;
 
   OLD_RW = 'W';
 
-  attachInterrupt(digitalPinToInterrupt(CLOCK), clockf, RISING);
+  attachInterrupt(digitalPinToInterrupt(ClockSigIN), clockf, RISING);
 
   Serial.begin(9600);
 
@@ -76,7 +72,7 @@ void setup() {
 
 void check_RW() { // OK
   
-  RW = digitalRead(READ_WRITE_PIN) ? 'r' : 'W';
+  RW = digitalRead(PinRW) ? 'r' : 'W';
   
   if ((RW == 'W') && (OLD_RW != 'W')) { // INPUT
    
@@ -130,7 +126,7 @@ unsigned int data = 0;
 
   if( RW == 'W' ) {
 
-    for(int i = 0; i < DATAN; i++) {
+    for(int i = 0; i < DataPins; i++) {
       
       bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
       data = (data << 1) + bit;
@@ -147,7 +143,7 @@ unsigned int data = 0;
   
 }
 
-void IN_OUT(unsigned int address) { // OK
+void IO_handler(unsigned int address) { // OK
 
 int bit = 0;
 
@@ -156,7 +152,7 @@ if( RW == 'W' ) {
   switch(address) {
 
     case 0x6000:
-      for(int i = 0; i < DATAN; i++) {
+      for(int i = 0; i < DataPins; i++) {
 
         if ( bitRead(DATADRB, (7-i)) == 1 ) {
           
@@ -167,7 +163,7 @@ if( RW == 'W' ) {
       }
       break;
     case 0x6001:
-      for(int i = 0; i < DATAN; i++) {
+      for(int i = 0; i < DataPins; i++) {
 
         if ( bitRead(DATADRA, (7-i)) == 1 ) {
           
@@ -178,7 +174,7 @@ if( RW == 'W' ) {
       }
       break;
     case 0x6002: // W
-      for(int i = 0; i < DATAN; i++) {
+      for(int i = 0; i < DataPins; i++) {
       
         bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
         DATADRB = (DATADRB << 1) + bit;
@@ -186,7 +182,7 @@ if( RW == 'W' ) {
       }
       break;
     case 0x6003: // W
-      for(int i = 0; i < DATAN; i++) {
+      for(int i = 0; i < DataPins; i++) {
       
         bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
         DATADRA = (DATADRA << 1) + bit;
@@ -221,7 +217,7 @@ void loop() {
 
     check_RW();
   
-    for(int i = 0; i < ADDRN; i++) {
+    for(int i = 0; i < AddressPins; i++) {
 
       bit = digitalRead(ADDR_PIN[i]) ? 1 : 0;
       address = (address << 1) + bit;
@@ -242,7 +238,7 @@ void loop() {
     
     } else if ((address >= 0x6000) && (address <= 0x7FFF)) {
 
-      IN_OUT(address);
+      IO_handler(address);
     
     } else if ((address >= 0x8000) && (address <= 0xFFFF)) {
     
@@ -256,7 +252,7 @@ void loop() {
 
     if ( RW == 'W' ) {
 
-      for(int i = 0; i < DATAN; i++) {
+      for(int i = 0; i < DataPins; i++) {
       
         bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
         hexData = (hexData << 1) + bit;

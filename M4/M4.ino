@@ -1,25 +1,26 @@
 #include <RPC.h>
-#define RESET_PIN 4
-#define CLOCKSIG 5
+
+#define PinRESET 4
+#define ClockSigOUT 5
 
 void setup() {
   RPC.begin();
-  pinMode(CLOCKSIG, OUTPUT);
-  pinMode(RESET_PIN, OUTPUT);
+  pinMode(ClockSigOUT, OUTPUT);
+  pinMode(PinRESET, OUTPUT);
   reset();
 }
 
 void reset() {
-  digitalWrite(RESET_PIN, HIGH);
+  digitalWrite(PinRESET, HIGH);
   delay(1000);
-  digitalWrite(RESET_PIN, LOW);
+  digitalWrite(PinRESET, LOW);
   delay(1000);
-  digitalWrite(RESET_PIN, HIGH);
+  digitalWrite(PinRESET, HIGH);
 }
 
 void loop() {
-  digitalWrite(CLOCKSIG, HIGH);
+  digitalWrite(ClockSigOUT, HIGH);
   delay(1);
-  digitalWrite(CLOCKSIG, LOW);
+  digitalWrite(ClockSigOUT, LOW);
   delay(1);
 }
