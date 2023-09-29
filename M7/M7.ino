@@ -1,4 +1,4 @@
-/* PIN 23 = D7, PIN 25 = D6, PIN 27 = D5 e così via */
+/* PIN 23 = D0, PIN 25 = D1, PIN 27 = D2 e così via */
 /* PIN 22 = A15, PIN 24 = A14, PIN 26 = A13 e così via */
 
 #include <RPC.h>
@@ -52,6 +52,7 @@ void setup() {
   memset(stack, 0x00, sizeof(byte)*256);
   memset(freeram, 0x00, sizeof(byte)*24064);
   memset(rom, 0x00, sizeof(byte)*32768);
+
   memset(OPB, 0, sizeof(boolean)*8);
   memset(OPA, 0, sizeof(boolean)*8);
   memset(IPB, 0, sizeof(boolean)*8);
@@ -104,11 +105,11 @@ void decoding(byte gpbyte) { // OK
     
     if (gpbit == 0) {  
                
-      digitalWrite(DATA_PIN[7-i],LOW);
+      digitalWrite(DATA_PIN[i],LOW);
       
     } else {  
       
-      digitalWrite(DATA_PIN[7-i],HIGH);
+      digitalWrite(DATA_PIN[i],HIGH);
       
     } 
        
@@ -121,19 +122,12 @@ void decoding(byte gpbyte) { // OK
 void RW_mem(unsigned int address, unsigned int reference, byte memblock[]) {
 
 int offset = address - reference;
-int bit = 0;
 unsigned int data = 0;
 
   if( RW == 'W' ) {
 
-    for(int i = 0; i < DataPins; i++) {
-      
-      bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
-      data = (data << 1) + bit;
-
-    }
-
-  memblock[offset] = data;
+    data = ((GPIOJ->IDR & 0x007F) << 1) + ((GPIOG->IDR & 0x2000) >> 13);
+    memblock[offset] = data;
 
   } else if ( RW == 'r' ) {
 
@@ -156,7 +150,7 @@ if( RW == 'W' ) {
 
         if ( bitRead(DATADRB, (7-i)) == 1 ) {
           
-          OPB[7-i] = digitalRead(DATA_PIN[i]) ? 1 : 0;
+          OPB[7-i] = digitalRead(DATA_PIN[7-i]) ? 1 : 0;
         
         }
       
@@ -167,27 +161,17 @@ if( RW == 'W' ) {
 
         if ( bitRead(DATADRA, (7-i)) == 1 ) {
           
-          OPA[7-i] = digitalRead(DATA_PIN[i]) ? 1 : 0;
+          OPA[7-i] = digitalRead(DATA_PIN[7-i]) ? 1 : 0;
         
         }
       
       }
       break;
     case 0x6002: // W
-      for(int i = 0; i < DataPins; i++) {
-      
-        bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
-        DATADRB = (DATADRB << 1) + bit;
-      
-      }
+      DATADRB = ((GPIOJ->IDR & 0x007F) << 1) + ((GPIOG->IDR & 0x2000) >> 13);
       break;
     case 0x6003: // W
-      for(int i = 0; i < DataPins; i++) {
-      
-        bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
-        DATADRA = (DATADRA << 1) + bit;
-      
-      }
+      DATADRA = ((GPIOJ->IDR & 0x007F) << 1) + ((GPIOG->IDR & 0x2000) >> 13);
       break;
     default:
       break;
@@ -254,7 +238,7 @@ void loop() {
 
       for(int i = 0; i < DataPins; i++) {
       
-        bit = digitalRead(DATA_PIN[i]) ? 1 : 0;
+        bit = digitalRead(DATA_PIN[7-i]) ? 1 : 0;
         hexData = (hexData << 1) + bit;
       
       }
