@@ -1,5 +1,20 @@
-/* PIN 23 = D0, PIN 25 = D1, PIN 27 = D2 e così via */
-/* PIN 22 = A15, PIN 24 = A14, PIN 26 = A13 e così via */
+/* PIN 23 = D0, PIN 25 = D1, PIN 27 = D2, PIN 29 = D3, PIN 31 = D4, PIN 33 = D5, PIN 35 = D6, PIN 37 = D7 */
+/* PIN 22 = A15, 
+   PIN 24 = A14, 
+   PIN 26 = A13, 
+   PIN 28 = A12,
+   PIN 30 = A11,
+   PIN 32 = A10,
+   PIN 34 = A9,
+   PIN 36 = A8,
+   PIN 38 = A7,
+   PIN 40 = A6,
+   PIN 42 = A5,
+   PIN 44 = A4,
+   PIN 46 = A3,
+   PIN 48 = A2,
+   PIN 50 = A1,
+   PIN 52 = A0 */
 
 #include <RPC.h>
 
@@ -8,6 +23,10 @@
 #define DataPins 8
 #define PinRW 3
 #define ProgramDIM 19
+#define IDRPORTJMask 0x007F
+#define IDRPORTGMask 0x2000
+#define MODERPORTJMask 0x00003FFF
+#define MODERPORTGMask 0x0C000000
 
 const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0x20, 0x0b, 0x80, 0x4c, 0x08, 0x80, 0x48, 0xa9, 0x50, 0x8d, 0x00, 0x60, 0x68, 0x60};
 
@@ -77,8 +96,8 @@ void check_RW() { // OK
   
   if ((RW == 'W') && (OLD_RW != 'W')) { // INPUT
    
-    GPIOJ->MODER = 0x00010000; // OK
-    GPIOG->MODER = 0x00000000; // OK
+    GPIOJ->MODER = (0x00000000 | (GPIOJ->MODER & ~MODERPORTJMask)); // OK
+    GPIOG->MODER = (0x00000000 | (GPIOG->MODER & ~MODERPORTGMask)); // OK
     
     OLD_RW = RW;
     
@@ -86,8 +105,8 @@ void check_RW() { // OK
   
   if ((RW == 'r') && (OLD_RW != 'r')) { // OUTPUT
     
-    GPIOJ->MODER = 0x00011555; // OK
-    GPIOG->MODER = 0x04000000; // OK
+    GPIOJ->MODER = (0x00001555 | (GPIOJ->MODER & ~MODERPORTJMask)); // OK
+    GPIOG->MODER = (0x04000000 | (GPIOG->MODER & ~MODERPORTGMask)); // OK
     
     OLD_RW = RW;
     
@@ -126,7 +145,7 @@ unsigned int data = 0;
 
   if( RW == 'W' ) {
 
-    data = ((GPIOJ->IDR & 0x007F) << 1) + ((GPIOG->IDR & 0x2000) >> 13);
+    data = ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
     memblock[offset] = data;
 
   } else if ( RW == 'r' ) {
@@ -168,10 +187,10 @@ if( RW == 'W' ) {
       }
       break;
     case 0x6002: // W
-      DATADRB = ((GPIOJ->IDR & 0x007F) << 1) + ((GPIOG->IDR & 0x2000) >> 13);
+      DATADRB = ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
       break;
     case 0x6003: // W
-      DATADRA = ((GPIOJ->IDR & 0x007F) << 1) + ((GPIOG->IDR & 0x2000) >> 13);
+      DATADRA = ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
       break;
     default:
       break;

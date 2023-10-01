@@ -1,6 +1,6 @@
 #include <RPC.h>
 
-#define PinRESET 4
+#define PinRESET 6
 #define ClockSigOUT 5
 
 void setup() {
@@ -20,7 +20,7 @@ void reset() {
 
 void loop() {
   digitalWrite(ClockSigOUT, HIGH);
-  delay(1);
+  delay(1000);
   digitalWrite(ClockSigOUT, LOW);
-  delay(1);
+  delay(1000);
 }
