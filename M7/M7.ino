@@ -27,6 +27,8 @@
 #define IDRPORTGMask 0x2000
 #define MODERPORTJMask 0x00003FFF
 #define MODERPORTGMask 0x0C000000
+#define ODRPORTJMask 0x00FE
+#define ODRPORTGMask 0x0001
 
 const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0x20, 0x0b, 0x80, 0x4c, 0x08, 0x80, 0x48, 0xa9, 0x50, 0x8d, 0x00, 0x60, 0x68, 0x60};
 
@@ -114,30 +116,6 @@ void check_RW() { // OK
   
 }
 
-void decoding(byte gpbyte) { // OK
-  
-  boolean gpbit = 0;
-  
-  for (int i = 7; i >= 0; i--) { 
-    
-    gpbit = bitRead(gpbyte, i);
-    
-    if (gpbit == 0) {  
-               
-      digitalWrite(DATA_PIN[i],LOW);
-      
-    } else {  
-      
-      digitalWrite(DATA_PIN[i],HIGH);
-      
-    } 
-       
-  }
-
-  hexData = gpbyte;
-  
-}
-
 void RW_mem(unsigned int address, unsigned int reference, byte memblock[]) {
 
 int offset = address - reference;
@@ -150,7 +128,9 @@ unsigned int data = 0;
 
   } else if ( RW == 'r' ) {
 
-    decoding(memblock[offset]);
+    GPIOJ->ODR = (unsigned short) (((memblock[offset] & ODRPORTJMask) >> 1) | (GPIOJ->ODR & 0xFF80));
+    GPIOG->ODR = (unsigned short) (((memblock[offset] & ODRPORTGMask) << 13) | (GPIOG->ODR & 0xDFFF));
+    hexData = (byte) (((GPIOJ->ODR & IDRPORTJMask) << 1) + ((GPIOG->ODR & IDRPORTGMask) >> 13));
     
   }
   
@@ -246,7 +226,9 @@ void loop() {
     } else if ((address >= 0x8000) && (address <= 0xFFFF)) {
     
       int offset = address - 0x8000;
-      decoding(rom[offset]);
+      GPIOJ->ODR = (unsigned short) (((rom[offset] & ODRPORTJMask) >> 1) | (GPIOJ->ODR & 0xFF80));
+      GPIOG->ODR = (unsigned short) (((rom[offset] & ODRPORTGMask) << 13) | (GPIOG->ODR & 0xDFFF));
+      hexData = (byte) (((GPIOJ->ODR & IDRPORTJMask) << 1) + ((GPIOG->ODR & IDRPORTGMask) >> 13));
     
     }
 
