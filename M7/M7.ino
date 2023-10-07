@@ -35,8 +35,8 @@ const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0x20, 0x0b,
 const char ADDR_PIN[] = {22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
 const char DATA_PIN[] = {23, 25, 27, 29, 31, 33, 35, 37};
 
-byte stack[256];
 byte zeropage[256];
+byte stack[256];
 byte freeram[24064];
 byte rom[32768];
 
@@ -92,14 +92,14 @@ void setup() {
 
 }
 
-void check_RW() { // OK
+void check_RW() {
   
   RW = digitalRead(PinRW) ? 'r' : 'W';
   
   if ((RW == 'W') && (OLD_RW != 'W')) { // INPUT
    
-    GPIOJ->MODER = (0x00000000 | (GPIOJ->MODER & ~MODERPORTJMask)); // OK
-    GPIOG->MODER = (0x00000000 | (GPIOG->MODER & ~MODERPORTGMask)); // OK
+    GPIOJ->MODER = (0x00000000 | (GPIOJ->MODER & ~MODERPORTJMask));
+    GPIOG->MODER = (0x00000000 | (GPIOG->MODER & ~MODERPORTGMask));
     
     OLD_RW = RW;
     
@@ -107,8 +107,8 @@ void check_RW() { // OK
   
   if ((RW == 'r') && (OLD_RW != 'r')) { // OUTPUT
     
-    GPIOJ->MODER = (0x00001555 | (GPIOJ->MODER & ~MODERPORTJMask)); // OK
-    GPIOG->MODER = (0x04000000 | (GPIOG->MODER & ~MODERPORTGMask)); // OK
+    GPIOJ->MODER = (0x00001555 | (GPIOJ->MODER & ~MODERPORTJMask));
+    GPIOG->MODER = (0x04000000 | (GPIOG->MODER & ~MODERPORTGMask));
     
     OLD_RW = RW;
     
@@ -118,13 +118,11 @@ void check_RW() { // OK
 
 void RW_mem(unsigned int address, unsigned int reference, byte memblock[]) {
 
-int offset = address - reference;
-unsigned int data = 0;
+unsigned int offset = address - reference;
 
   if( RW == 'W' ) {
 
-    data = ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
-    memblock[offset] = data;
+    memblock[offset] = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
 
   } else if ( RW == 'r' ) {
 
@@ -136,9 +134,7 @@ unsigned int data = 0;
   
 }
 
-void IO_handler(unsigned int address) { // OK
-
-int bit = 0;
+void IO_handler(unsigned int address) {
 
 if( RW == 'W' ) {
 
@@ -225,7 +221,7 @@ void loop() {
     
     } else if ((address >= 0x8000) && (address <= 0xFFFF)) {
     
-      int offset = address - 0x8000;
+      unsigned int offset = address - 0x8000;
       GPIOJ->ODR = (unsigned short) (((rom[offset] & ODRPORTJMask) >> 1) | (GPIOJ->ODR & 0xFF80));
       GPIOG->ODR = (unsigned short) (((rom[offset] & ODRPORTGMask) << 13) | (GPIOG->ODR & 0xDFFF));
       hexData = (byte) (((GPIOJ->ODR & IDRPORTJMask) << 1) + ((GPIOG->ODR & IDRPORTGMask) >> 13));
