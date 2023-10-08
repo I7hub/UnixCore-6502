@@ -94,7 +94,7 @@ void setup() {
 
 void check_RW() {
   
-  RW = digitalRead(PinRW) ? 'r' : 'W';
+  RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
   
   if ((RW == 'W') && (OLD_RW != 'W')) { // INPUT
    
@@ -138,6 +138,8 @@ void IO_handler(unsigned int address) {
 
 if( RW == 'W' ) {
 
+byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
+
   switch(address) {
 
     case 0x6000:
@@ -145,7 +147,7 @@ if( RW == 'W' ) {
 
         if ( bitRead(DATADRB, (7-i)) == 1 ) {
           
-          OPB[7-i] = digitalRead(DATA_PIN[7-i]) ? 1 : 0;
+          OPB[7-i] = bitRead(data, (7-i));
         
         }
       
@@ -156,17 +158,17 @@ if( RW == 'W' ) {
 
         if ( bitRead(DATADRA, (7-i)) == 1 ) {
           
-          OPA[7-i] = digitalRead(DATA_PIN[7-i]) ? 1 : 0;
+          OPA[7-i] = bitRead(data, (7-i));
         
         }
       
       }
       break;
     case 0x6002: // W
-      DATADRB = ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
+      DATADRB = data;
       break;
     case 0x6003: // W
-      DATADRA = ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
+      DATADRA = data;
       break;
     default:
       break;
