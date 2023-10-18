@@ -48,9 +48,6 @@ boolean IPA[8]; // Input Port A
 unsigned int DATADRB = 0; // Data Direction Register B
 unsigned int DATADRA = 0; // Data Direction Register A
 
-char OLD_RW = 'u'; // set OLD_RW to undefined
-char RW = 'u'; // set RW to undefined
-
 unsigned int hexData = 0;
 
 boolean statusBit = 0;
@@ -84,8 +81,6 @@ void setup() {
   rom[32765] = 0x80;
   rom[32764] = 0x00;
 
-  OLD_RW = 'W';
-
   attachInterrupt(digitalPinToInterrupt(ClockSigIN), clockf, RISING);
 
   Serial.begin(9600);
@@ -94,14 +89,13 @@ void setup() {
 
 void check_RW() {
   
-  RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
+  char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
+  char OLD_RW = bitRead(GPIOG->MODER, 26) ? 'r' : 'W';
   
   if ((RW == 'W') && (OLD_RW != 'W')) { // INPUT
    
     GPIOJ->MODER = (0x00000000 | (GPIOJ->MODER & ~MODERPORTJMask));
     GPIOG->MODER = (0x00000000 | (GPIOG->MODER & ~MODERPORTGMask));
-    
-    OLD_RW = RW;
     
   }
   
@@ -110,14 +104,13 @@ void check_RW() {
     GPIOJ->MODER = (0x00001555 | (GPIOJ->MODER & ~MODERPORTJMask));
     GPIOG->MODER = (0x04000000 | (GPIOG->MODER & ~MODERPORTGMask));
     
-    OLD_RW = RW;
-    
   }
   
 }
 
 void RW_mem(unsigned int address, unsigned int reference, byte memblock[]) {
 
+char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
 unsigned int offset = address - reference;
 
   if( RW == 'W' ) {
@@ -135,6 +128,8 @@ unsigned int offset = address - reference;
 }
 
 void IO_handler(unsigned int address) {
+
+char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
 
 if( RW == 'W' ) {
 
@@ -228,6 +223,8 @@ void loop() {
     long int t2 = micros();
     Serial.print(t2-t1);
 
+    char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
+    
     if ( RW == 'W' ) {
 
       for(int i = 0; i < DataPins; i++) {
