@@ -1,4 +1,5 @@
 /* PIN 23 = D0, PIN 25 = D1, PIN 27 = D2, PIN 29 = D3, PIN 31 = D4, PIN 33 = D5, PIN 35 = D6, PIN 37 = D7 */
+/* PIN 6 = PB0, PIN 7 = PB1, PIN 8 = PB2, PIN 9 = PB3, PIN 10 = PB4, PIN 11 = PB5, PIN 12 = PB6, PIN 13 = PB7 */
 /* PIN 22 = A15, 
    PIN 24 = A14, 
    PIN 26 = A13, 
@@ -40,10 +41,7 @@ byte stack[256];
 byte freeram[24064];
 byte rom[32768];
 
-boolean OPB[8]; // Output Port B
 boolean OPA[8]; // Output Port A
-boolean IPB[8]; // Input Port B
-boolean IPA[8]; // Input Port A
 
 unsigned int DATADRB = 0; // Data Direction Register B
 unsigned int DATADRA = 0; // Data Direction Register A
@@ -71,10 +69,7 @@ void setup() {
   memset(freeram, 0x00, sizeof(byte)*24064);
   memset(rom, 0x00, sizeof(byte)*32768);
 
-  memset(OPB, 0, sizeof(boolean)*8);
   memset(OPA, 0, sizeof(boolean)*8);
-  memset(IPB, 0, sizeof(boolean)*8);
-  memset(IPA, 0, sizeof(boolean)*8);
 
   memcpy(rom, UnixCore6502, sizeof(byte)*ProgramDIM);
 
@@ -138,15 +133,14 @@ byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGM
   switch(address) {
 
     case 0x6000:
-      for(int i = 0; i < DataPins; i++) {
-
-        if ( bitRead(DATADRB, (7-i)) == 1 ) {
-          
-          OPB[7-i] = bitRead(data, (7-i));
-        
-        }
-      
-      }
+      GPIOD->ODR = bitRead(DATADRB, 0) ? (unsigned short) (((data & 0x01) << 13) | (GPIOD->ODR & 0xDFFF)) : GPIOD->ODR;
+      GPIOB->ODR = bitRead(DATADRB, 1) ? (unsigned short) (((data & 0x02) << 3) | (GPIOB->ODR & 0xFFEF)) : GPIOB->ODR;
+      GPIOB->ODR = bitRead(DATADRB, 2) ? (unsigned short) (((data & 0x04) << 6) | (GPIOB->ODR & 0xFEFF)) : GPIOB->ODR;
+      GPIOB->ODR = bitRead(DATADRB, 3) ? (unsigned short) (((data & 0x08) << 6) | (GPIOB->ODR & 0xFDFF)) : GPIOB->ODR;
+      GPIOK->ODR = bitRead(DATADRB, 4) ? (unsigned short) (((data & 0x10) >> 3) | (GPIOK->ODR & 0xFFFD)) : GPIOK->ODR;
+      GPIOJ->ODR = bitRead(DATADRB, 5) ? (unsigned short) (((data & 0x20) << 5) | (GPIOJ->ODR & 0xFBFF)) : GPIOJ->ODR;
+      GPIOJ->ODR = bitRead(DATADRB, 6) ? (unsigned short) (((data & 0x40) << 5) | (GPIOJ->ODR & 0xF7FF)) : GPIOJ->ODR;
+      GPIOH->ODR = bitRead(DATADRB, 7) ? (unsigned short) (((data & 0x80) >> 1) | (GPIOH->ODR & 0xFFBF)) : GPIOH->ODR;
       break;
     case 0x6001:
       for(int i = 0; i < DataPins; i++) {
@@ -161,6 +155,14 @@ byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGM
       break;
     case 0x6002: // W
       DATADRB = data;
+      GPIOD->MODER = bitRead(DATADRB, 0) ? (0x04000000 | (GPIOD->MODER & ~0x0C000000)) : (0x00000000 | (GPIOD->MODER & ~0x0C000000));
+      GPIOB->MODER = bitRead(DATADRB, 1) ? (0x00000100 | (GPIOB->MODER & ~0x00000300)) : (0x00000000 | (GPIOB->MODER & ~0x00000300));
+      GPIOB->MODER = bitRead(DATADRB, 2) ? (0x00010000 | (GPIOB->MODER & ~0x00030000)) : (0x00000000 | (GPIOB->MODER & ~0x00030000));
+      GPIOB->MODER = bitRead(DATADRB, 3) ? (0x00040000 | (GPIOB->MODER & ~0x000C0000)) : (0x00000000 | (GPIOB->MODER & ~0x000C0000));
+      GPIOK->MODER = bitRead(DATADRB, 4) ? (0x00000004 | (GPIOK->MODER & ~0x0000000C)) : (0x00000000 | (GPIOK->MODER & ~0x0000000C));
+      GPIOJ->MODER = bitRead(DATADRB, 5) ? (0x00100000 | (GPIOJ->MODER & ~0x00300000)) : (0x00000000 | (GPIOJ->MODER & ~0x00300000));
+      GPIOJ->MODER = bitRead(DATADRB, 6) ? (0x00400000 | (GPIOJ->MODER & ~0x00C00000)) : (0x00000000 | (GPIOJ->MODER & ~0x00C00000));
+      GPIOH->MODER = bitRead(DATADRB, 7) ? (0x00001000 | (GPIOH->MODER & ~0x00003000)) : (0x00000000 | (GPIOH->MODER & ~0x00003000));
       break;
     case 0x6003: // W
       DATADRA = data;

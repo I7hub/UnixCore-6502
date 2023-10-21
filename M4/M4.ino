@@ -1,6 +1,6 @@
 #include <RPC.h>
 
-#define PinRESET 6
+#define PinRESET 4
 #define ClockSigOUT 5
 
 void setup() {
