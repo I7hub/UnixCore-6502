@@ -23,7 +23,7 @@
 #define ClockSigIN 2
 #define DataPins 8
 #define PinRW 3
-#define ProgramDIM 19
+#define ProgramDIM 18
 #define IDRPORTJMask 0x007F
 #define IDRPORTGMask 0x2000
 #define MODERPORTJMask 0x00003FFF
@@ -31,7 +31,7 @@
 #define ODRPORTJMask 0x00FE
 #define ODRPORTGMask 0x0001
 
-const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0x20, 0x0b, 0x80, 0x4c, 0x08, 0x80, 0x48, 0xa9, 0x50, 0x8d, 0x00, 0x60, 0x68, 0x60};
+const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0xa9, 0x55, 0x8d, 0x00, 0x60, 0xa9, 0xaa, 0x8d, 0x00, 0x60, 0x4c, 0x05, 0x80};
 
 const char ADDR_PIN[] = {22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
 const char DATA_PIN[] = {23, 25, 27, 29, 31, 33, 35, 37};
@@ -75,6 +75,8 @@ void setup() {
 
   rom[32765] = 0x80;
   rom[32764] = 0x00;
+
+  RCC->AHB4ENR |= 0x0000000a;
 
   attachInterrupt(digitalPinToInterrupt(ClockSigIN), clockf, RISING);
 
