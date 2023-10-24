@@ -1,5 +1,6 @@
 /* PIN 23 = D0, PIN 25 = D1, PIN 27 = D2, PIN 29 = D3, PIN 31 = D4, PIN 33 = D5, PIN 35 = D6, PIN 37 = D7 */
 /* PIN 6 = PB0, PIN 7 = PB1, PIN 8 = PB2, PIN 9 = PB3, PIN 10 = PB4, PIN 11 = PB5, PIN 12 = PB6, PIN 13 = PB7 */
+/* PIN 21 = PA0, PIN 20 = PA1, PIN 19 = PA2, PIN 18 = PA3, PIN 17 = PA4, PIN 16 = PA5, PIN 15 = PA6, PIN 14 = PA7 */
 /* PIN 22 = A15, 
    PIN 24 = A14, 
    PIN 26 = A13, 
@@ -31,7 +32,7 @@
 #define ODRPORTJMask 0x00FE
 #define ODRPORTGMask 0x0001
 
-const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0xa9, 0x55, 0x8d, 0x00, 0x60, 0xa9, 0xaa, 0x8d, 0x00, 0x60, 0x4c, 0x05, 0x80};
+const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x03, 0x60, 0xa9, 0x55, 0x8d, 0x01, 0x60, 0xa9, 0xaa, 0x8d, 0x01, 0x60, 0x4c, 0x05, 0x80};
 
 const char ADDR_PIN[] = {22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
 const char DATA_PIN[] = {23, 25, 27, 29, 31, 33, 35, 37};
@@ -40,8 +41,6 @@ byte zeropage[256];
 byte stack[256];
 byte freeram[24064];
 byte rom[32768];
-
-boolean OPA[8]; // Output Port A
 
 unsigned int DATADRB = 0; // Data Direction Register B
 unsigned int DATADRA = 0; // Data Direction Register A
@@ -69,14 +68,12 @@ void setup() {
   memset(freeram, 0x00, sizeof(byte)*24064);
   memset(rom, 0x00, sizeof(byte)*32768);
 
-  memset(OPA, 0, sizeof(boolean)*8);
-
   memcpy(rom, UnixCore6502, sizeof(byte)*ProgramDIM);
 
   rom[32765] = 0x80;
   rom[32764] = 0x00;
 
-  RCC->AHB4ENR |= 0x0000000a;
+  RCC->AHB4ENR |= 0x0000000e;
 
   attachInterrupt(digitalPinToInterrupt(ClockSigIN), clockf, RISING);
 
@@ -145,15 +142,14 @@ byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGM
       GPIOH->ODR = bitRead(DATADRB, 7) ? (unsigned short) (((data & 0x80) >> 1) | (GPIOH->ODR & 0xFFBF)) : GPIOH->ODR;
       break;
     case 0x6001:
-      for(int i = 0; i < DataPins; i++) {
-
-        if ( bitRead(DATADRA, (7-i)) == 1 ) {
-          
-          OPA[7-i] = bitRead(data, (7-i));
-        
-        }
-      
-      }
+      GPIOH->ODR = bitRead(DATADRA, 0) ? (unsigned short) (((data & 0x01) << 4) | (GPIOH->ODR & 0xFFEF)) : GPIOH->ODR;
+      GPIOB->ODR = bitRead(DATADRA, 1) ? (unsigned short) (((data & 0x02) << 10) | (GPIOB->ODR & 0xF7FF)) : GPIOB->ODR;
+      GPIOD->ODR = bitRead(DATADRA, 2) ? (unsigned short) (((data & 0x04) << 4) | (GPIOD->ODR & 0xFFBF)) : GPIOD->ODR;
+      GPIOD->ODR = bitRead(DATADRA, 3) ? (unsigned short) (((data & 0x08) << 2) | (GPIOD->ODR & 0xFFDF)) : GPIOD->ODR;      
+      GPIOI->ODR = bitRead(DATADRA, 4) ? (unsigned short) (((data & 0x10) << 5) | (GPIOI->ODR & 0xFDFF)) : GPIOI->ODR;      
+      GPIOH->ODR = bitRead(DATADRA, 5) ? (unsigned short) (((data & 0x20) << 8) | (GPIOH->ODR & 0xDFFF)) : GPIOH->ODR;      
+      GPIOC->ODR = bitRead(DATADRA, 6) ? (unsigned short) (((data & 0x40) << 1) | (GPIOC->ODR & 0xFF7F)) : GPIOC->ODR;      
+      GPIOG->ODR = bitRead(DATADRA, 7) ? (unsigned short) (((data & 0x80) << 7) | (GPIOG->ODR & 0xBFFF)) : GPIOG->ODR;
       break;
     case 0x6002: // W
       DATADRB = data;
@@ -168,6 +164,14 @@ byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGM
       break;
     case 0x6003: // W
       DATADRA = data;
+      GPIOH->MODER = bitRead(DATADRA, 0) ? (0x00000100 | (GPIOH->MODER & ~0x00000300)) : (0x00000000 | (GPIOH->MODER & ~0x00000300));
+      GPIOB->MODER = bitRead(DATADRA, 1) ? (0x00400000 | (GPIOB->MODER & ~0x00C00000)) : (0x00000000 | (GPIOB->MODER & ~0x00C00000));
+      GPIOD->MODER = bitRead(DATADRA, 2) ? (0x00001000 | (GPIOD->MODER & ~0x00003000)) : (0x00000000 | (GPIOD->MODER & ~0x00003000));      
+      GPIOD->MODER = bitRead(DATADRA, 3) ? (0x00000400 | (GPIOD->MODER & ~0x00000C00)) : (0x00000000 | (GPIOD->MODER & ~0x00000C00));      
+      GPIOI->MODER = bitRead(DATADRA, 4) ? (0x00040000 | (GPIOI->MODER & ~0x000C0000)) : (0x00000000 | (GPIOI->MODER & ~0x000C0000));      
+      GPIOH->MODER = bitRead(DATADRA, 5) ? (0x04000000 | (GPIOH->MODER & ~0x0C000000)) : (0x00000000 | (GPIOH->MODER & ~0x0C000000));      
+      GPIOC->MODER = bitRead(DATADRA, 6) ? (0x00004000 | (GPIOC->MODER & ~0x0000C000)) : (0x00000000 | (GPIOC->MODER & ~0x0000C000));
+      GPIOG->MODER = bitRead(DATADRA, 7) ? (0x10000000 | (GPIOG->MODER & ~0x30000000)) : (0x00000000 | (GPIOG->MODER & ~0x30000000));
       break;
     default:
       break;
