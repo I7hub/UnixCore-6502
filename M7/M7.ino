@@ -56,11 +56,11 @@ void setup() {
   pinMode(PinRW, INPUT);
 
   for(int i = 0; i < AddressPins; i++) {
-      pinMode(ADDR_PIN[i],INPUT);
+    pinMode(ADDR_PIN[i],INPUT);
   }
 
   for(int i = 0; i < DataPins; i++) {
-      pinMode(DATA_PIN[i],INPUT);
+    pinMode(DATA_PIN[i],INPUT);
   }
   
   memset(zeropage, 0x00, sizeof(byte)*256);
@@ -99,30 +99,16 @@ void setup() {
 }
 
 void check_RW() {
-  
-  char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
-  char OLD_RW = bitRead(GPIOG->MODER, 26) ? 'r' : 'W';
-  
-  if ((RW == 'W') && (OLD_RW != 'W')) { // INPUT
    
-    GPIOJ->MODER = (0x00000000 | (GPIOJ->MODER & ~MODERPORTJMask));
-    GPIOG->MODER = (0x00000000 | (GPIOG->MODER & ~MODERPORTGMask));
-    
-  }
-  
-  if ((RW == 'r') && (OLD_RW != 'r')) { // OUTPUT
-    
-    GPIOJ->MODER = (0x00001555 | (GPIOJ->MODER & ~MODERPORTJMask));
-    GPIOG->MODER = (0x04000000 | (GPIOG->MODER & ~MODERPORTGMask));
-    
-  }
+  GPIOJ->MODER = bitRead(GPIOA->IDR, 2) ? (0x00001555 | (GPIOJ->MODER & ~MODERPORTJMask)) : (0x00000000 | (GPIOJ->MODER & ~MODERPORTJMask));
+  GPIOG->MODER = bitRead(GPIOA->IDR, 2) ? (0x04000000 | (GPIOG->MODER & ~MODERPORTGMask)) : (0x00000000 | (GPIOG->MODER & ~MODERPORTGMask));
   
 }
 
 void RW_mem(unsigned int address, unsigned int reference, byte memblock[]) {
 
-char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
-unsigned int offset = address - reference;
+  char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
+  unsigned int offset = address - reference;
 
   if( RW == 'W' ) {
 
@@ -140,76 +126,76 @@ unsigned int offset = address - reference;
 
 void IO_handler(unsigned int address) {
 
-char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
+  char RW = bitRead(GPIOA->IDR, 2) ? 'r' : 'W';
 
-if( RW == 'W' ) {
+  if( RW == 'W' ) {
 
-byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
+    byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
 
-  switch(address) {
+    switch(address) {
 
-    case 0x6000:
-      GPIOD->ODR = bitRead(DATADRB, 0) ? (unsigned short) (((data & 0x01) << 13) | (GPIOD->ODR & 0xDFFF)) : GPIOD->ODR;
-      GPIOB->ODR = bitRead(DATADRB, 1) ? (unsigned short) (((data & 0x02) << 3) | (GPIOB->ODR & 0xFFEF)) : GPIOB->ODR;
-      GPIOB->ODR = bitRead(DATADRB, 2) ? (unsigned short) (((data & 0x04) << 6) | (GPIOB->ODR & 0xFEFF)) : GPIOB->ODR;
-      GPIOB->ODR = bitRead(DATADRB, 3) ? (unsigned short) (((data & 0x08) << 6) | (GPIOB->ODR & 0xFDFF)) : GPIOB->ODR;
-      GPIOK->ODR = bitRead(DATADRB, 4) ? (unsigned short) (((data & 0x10) >> 3) | (GPIOK->ODR & 0xFFFD)) : GPIOK->ODR;
-      GPIOJ->ODR = bitRead(DATADRB, 5) ? (unsigned short) (((data & 0x20) << 5) | (GPIOJ->ODR & 0xFBFF)) : GPIOJ->ODR;
-      GPIOJ->ODR = bitRead(DATADRB, 6) ? (unsigned short) (((data & 0x40) << 5) | (GPIOJ->ODR & 0xF7FF)) : GPIOJ->ODR;
-      GPIOH->ODR = bitRead(DATADRB, 7) ? (unsigned short) (((data & 0x80) >> 1) | (GPIOH->ODR & 0xFFBF)) : GPIOH->ODR;
-      break;
-    case 0x6001:
-      GPIOH->ODR = bitRead(DATADRA, 0) ? (unsigned short) (((data & 0x01) << 4) | (GPIOH->ODR & 0xFFEF)) : GPIOH->ODR;
-      GPIOB->ODR = bitRead(DATADRA, 1) ? (unsigned short) (((data & 0x02) << 10) | (GPIOB->ODR & 0xF7FF)) : GPIOB->ODR;
-      GPIOD->ODR = bitRead(DATADRA, 2) ? (unsigned short) (((data & 0x04) << 4) | (GPIOD->ODR & 0xFFBF)) : GPIOD->ODR;
-      GPIOD->ODR = bitRead(DATADRA, 3) ? (unsigned short) (((data & 0x08) << 2) | (GPIOD->ODR & 0xFFDF)) : GPIOD->ODR;      
-      GPIOI->ODR = bitRead(DATADRA, 4) ? (unsigned short) (((data & 0x10) << 5) | (GPIOI->ODR & 0xFDFF)) : GPIOI->ODR;      
-      GPIOH->ODR = bitRead(DATADRA, 5) ? (unsigned short) (((data & 0x20) << 8) | (GPIOH->ODR & 0xDFFF)) : GPIOH->ODR;      
-      GPIOC->ODR = bitRead(DATADRA, 6) ? (unsigned short) (((data & 0x40) << 1) | (GPIOC->ODR & 0xFF7F)) : GPIOC->ODR;      
-      GPIOG->ODR = bitRead(DATADRA, 7) ? (unsigned short) (((data & 0x80) << 7) | (GPIOG->ODR & 0xBFFF)) : GPIOG->ODR;
-      break;
-    case 0x6002: // W
-      GPIOD->ODR = bitRead(DATADRB, 0) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xDFFF)) : GPIOD->ODR;
-      GPIOB->ODR = bitRead(DATADRB, 1) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xFFEF)) : GPIOB->ODR;
-      GPIOB->ODR = bitRead(DATADRB, 2) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xFEFF)) : GPIOB->ODR;
-      GPIOB->ODR = bitRead(DATADRB, 3) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xFDFF)) : GPIOB->ODR;
-      GPIOK->ODR = bitRead(DATADRB, 4) ? (unsigned short) (0x0000 | (GPIOK->ODR & 0xFFFD)) : GPIOK->ODR;
-      GPIOJ->ODR = bitRead(DATADRB, 5) ? (unsigned short) (0x0000 | (GPIOJ->ODR & 0xFBFF)) : GPIOJ->ODR;
-      GPIOJ->ODR = bitRead(DATADRB, 6) ? (unsigned short) (0x0000 | (GPIOJ->ODR & 0xF7FF)) : GPIOJ->ODR;
-      GPIOH->ODR = bitRead(DATADRB, 7) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xFFBF)) : GPIOH->ODR;
-      DATADRB = data;
-      GPIOD->MODER = bitRead(DATADRB, 0) ? (0x04000000 | (GPIOD->MODER & ~0x0C000000)) : (0x00000000 | (GPIOD->MODER & ~0x0C000000));
-      GPIOB->MODER = bitRead(DATADRB, 1) ? (0x00000100 | (GPIOB->MODER & ~0x00000300)) : (0x00000000 | (GPIOB->MODER & ~0x00000300));
-      GPIOB->MODER = bitRead(DATADRB, 2) ? (0x00010000 | (GPIOB->MODER & ~0x00030000)) : (0x00000000 | (GPIOB->MODER & ~0x00030000));
-      GPIOB->MODER = bitRead(DATADRB, 3) ? (0x00040000 | (GPIOB->MODER & ~0x000C0000)) : (0x00000000 | (GPIOB->MODER & ~0x000C0000));
-      GPIOK->MODER = bitRead(DATADRB, 4) ? (0x00000004 | (GPIOK->MODER & ~0x0000000C)) : (0x00000000 | (GPIOK->MODER & ~0x0000000C));
-      GPIOJ->MODER = bitRead(DATADRB, 5) ? (0x00100000 | (GPIOJ->MODER & ~0x00300000)) : (0x00000000 | (GPIOJ->MODER & ~0x00300000));
-      GPIOJ->MODER = bitRead(DATADRB, 6) ? (0x00400000 | (GPIOJ->MODER & ~0x00C00000)) : (0x00000000 | (GPIOJ->MODER & ~0x00C00000));
-      GPIOH->MODER = bitRead(DATADRB, 7) ? (0x00001000 | (GPIOH->MODER & ~0x00003000)) : (0x00000000 | (GPIOH->MODER & ~0x00003000));
-      break;
-    case 0x6003: // W
-      GPIOH->ODR = bitRead(DATADRA, 0) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xFFEF)) : GPIOH->ODR;
-      GPIOB->ODR = bitRead(DATADRA, 1) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xF7FF)) : GPIOB->ODR;
-      GPIOD->ODR = bitRead(DATADRA, 2) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xFFBF)) : GPIOD->ODR;
-      GPIOD->ODR = bitRead(DATADRA, 3) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xFFDF)) : GPIOD->ODR;      
-      GPIOI->ODR = bitRead(DATADRA, 4) ? (unsigned short) (0x0000 | (GPIOI->ODR & 0xFDFF)) : GPIOI->ODR;      
-      GPIOH->ODR = bitRead(DATADRA, 5) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xDFFF)) : GPIOH->ODR;      
-      GPIOC->ODR = bitRead(DATADRA, 6) ? (unsigned short) (0x0000 | (GPIOC->ODR & 0xFF7F)) : GPIOC->ODR;      
-      GPIOG->ODR = bitRead(DATADRA, 7) ? (unsigned short) (0x0000 | (GPIOG->ODR & 0xBFFF)) : GPIOG->ODR;
-      DATADRA = data;
-      GPIOH->MODER = bitRead(DATADRA, 0) ? (0x00000100 | (GPIOH->MODER & ~0x00000300)) : (0x00000000 | (GPIOH->MODER & ~0x00000300));
-      GPIOB->MODER = bitRead(DATADRA, 1) ? (0x00400000 | (GPIOB->MODER & ~0x00C00000)) : (0x00000000 | (GPIOB->MODER & ~0x00C00000));
-      GPIOD->MODER = bitRead(DATADRA, 2) ? (0x00001000 | (GPIOD->MODER & ~0x00003000)) : (0x00000000 | (GPIOD->MODER & ~0x00003000));      
-      GPIOD->MODER = bitRead(DATADRA, 3) ? (0x00000400 | (GPIOD->MODER & ~0x00000C00)) : (0x00000000 | (GPIOD->MODER & ~0x00000C00));      
-      GPIOI->MODER = bitRead(DATADRA, 4) ? (0x00040000 | (GPIOI->MODER & ~0x000C0000)) : (0x00000000 | (GPIOI->MODER & ~0x000C0000));      
-      GPIOH->MODER = bitRead(DATADRA, 5) ? (0x04000000 | (GPIOH->MODER & ~0x0C000000)) : (0x00000000 | (GPIOH->MODER & ~0x0C000000));      
-      GPIOC->MODER = bitRead(DATADRA, 6) ? (0x00004000 | (GPIOC->MODER & ~0x0000C000)) : (0x00000000 | (GPIOC->MODER & ~0x0000C000));
-      GPIOG->MODER = bitRead(DATADRA, 7) ? (0x10000000 | (GPIOG->MODER & ~0x30000000)) : (0x00000000 | (GPIOG->MODER & ~0x30000000));
-      break;
-    default:
-      break;
+      case 0x6000:
+        GPIOD->ODR = bitRead(DATADRB, 0) ? (unsigned short) (((data & 0x01) << 13) | (GPIOD->ODR & 0xDFFF)) : GPIOD->ODR;
+        GPIOB->ODR = bitRead(DATADRB, 1) ? (unsigned short) (((data & 0x02) << 3) | (GPIOB->ODR & 0xFFEF)) : GPIOB->ODR;
+        GPIOB->ODR = bitRead(DATADRB, 2) ? (unsigned short) (((data & 0x04) << 6) | (GPIOB->ODR & 0xFEFF)) : GPIOB->ODR;
+        GPIOB->ODR = bitRead(DATADRB, 3) ? (unsigned short) (((data & 0x08) << 6) | (GPIOB->ODR & 0xFDFF)) : GPIOB->ODR;
+        GPIOK->ODR = bitRead(DATADRB, 4) ? (unsigned short) (((data & 0x10) >> 3) | (GPIOK->ODR & 0xFFFD)) : GPIOK->ODR;
+        GPIOJ->ODR = bitRead(DATADRB, 5) ? (unsigned short) (((data & 0x20) << 5) | (GPIOJ->ODR & 0xFBFF)) : GPIOJ->ODR;
+        GPIOJ->ODR = bitRead(DATADRB, 6) ? (unsigned short) (((data & 0x40) << 5) | (GPIOJ->ODR & 0xF7FF)) : GPIOJ->ODR;
+        GPIOH->ODR = bitRead(DATADRB, 7) ? (unsigned short) (((data & 0x80) >> 1) | (GPIOH->ODR & 0xFFBF)) : GPIOH->ODR;
+        break;
+      case 0x6001:
+        GPIOH->ODR = bitRead(DATADRA, 0) ? (unsigned short) (((data & 0x01) << 4) | (GPIOH->ODR & 0xFFEF)) : GPIOH->ODR;
+        GPIOB->ODR = bitRead(DATADRA, 1) ? (unsigned short) (((data & 0x02) << 10) | (GPIOB->ODR & 0xF7FF)) : GPIOB->ODR;
+        GPIOD->ODR = bitRead(DATADRA, 2) ? (unsigned short) (((data & 0x04) << 4) | (GPIOD->ODR & 0xFFBF)) : GPIOD->ODR;
+        GPIOD->ODR = bitRead(DATADRA, 3) ? (unsigned short) (((data & 0x08) << 2) | (GPIOD->ODR & 0xFFDF)) : GPIOD->ODR;      
+        GPIOI->ODR = bitRead(DATADRA, 4) ? (unsigned short) (((data & 0x10) << 5) | (GPIOI->ODR & 0xFDFF)) : GPIOI->ODR;      
+        GPIOH->ODR = bitRead(DATADRA, 5) ? (unsigned short) (((data & 0x20) << 8) | (GPIOH->ODR & 0xDFFF)) : GPIOH->ODR;      
+        GPIOC->ODR = bitRead(DATADRA, 6) ? (unsigned short) (((data & 0x40) << 1) | (GPIOC->ODR & 0xFF7F)) : GPIOC->ODR;      
+        GPIOG->ODR = bitRead(DATADRA, 7) ? (unsigned short) (((data & 0x80) << 7) | (GPIOG->ODR & 0xBFFF)) : GPIOG->ODR;
+        break;
+      case 0x6002: // W
+        GPIOD->ODR = bitRead(DATADRB, 0) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xDFFF)) : GPIOD->ODR;
+        GPIOB->ODR = bitRead(DATADRB, 1) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xFFEF)) : GPIOB->ODR;
+        GPIOB->ODR = bitRead(DATADRB, 2) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xFEFF)) : GPIOB->ODR;
+        GPIOB->ODR = bitRead(DATADRB, 3) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xFDFF)) : GPIOB->ODR;
+        GPIOK->ODR = bitRead(DATADRB, 4) ? (unsigned short) (0x0000 | (GPIOK->ODR & 0xFFFD)) : GPIOK->ODR;
+        GPIOJ->ODR = bitRead(DATADRB, 5) ? (unsigned short) (0x0000 | (GPIOJ->ODR & 0xFBFF)) : GPIOJ->ODR;
+        GPIOJ->ODR = bitRead(DATADRB, 6) ? (unsigned short) (0x0000 | (GPIOJ->ODR & 0xF7FF)) : GPIOJ->ODR;
+        GPIOH->ODR = bitRead(DATADRB, 7) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xFFBF)) : GPIOH->ODR;
+        DATADRB = data;
+        GPIOD->MODER = bitRead(DATADRB, 0) ? (0x04000000 | (GPIOD->MODER & ~0x0C000000)) : (0x00000000 | (GPIOD->MODER & ~0x0C000000));
+        GPIOB->MODER = bitRead(DATADRB, 1) ? (0x00000100 | (GPIOB->MODER & ~0x00000300)) : (0x00000000 | (GPIOB->MODER & ~0x00000300));
+        GPIOB->MODER = bitRead(DATADRB, 2) ? (0x00010000 | (GPIOB->MODER & ~0x00030000)) : (0x00000000 | (GPIOB->MODER & ~0x00030000));
+        GPIOB->MODER = bitRead(DATADRB, 3) ? (0x00040000 | (GPIOB->MODER & ~0x000C0000)) : (0x00000000 | (GPIOB->MODER & ~0x000C0000));
+        GPIOK->MODER = bitRead(DATADRB, 4) ? (0x00000004 | (GPIOK->MODER & ~0x0000000C)) : (0x00000000 | (GPIOK->MODER & ~0x0000000C));
+        GPIOJ->MODER = bitRead(DATADRB, 5) ? (0x00100000 | (GPIOJ->MODER & ~0x00300000)) : (0x00000000 | (GPIOJ->MODER & ~0x00300000));
+        GPIOJ->MODER = bitRead(DATADRB, 6) ? (0x00400000 | (GPIOJ->MODER & ~0x00C00000)) : (0x00000000 | (GPIOJ->MODER & ~0x00C00000));
+        GPIOH->MODER = bitRead(DATADRB, 7) ? (0x00001000 | (GPIOH->MODER & ~0x00003000)) : (0x00000000 | (GPIOH->MODER & ~0x00003000));
+        break;
+      case 0x6003: // W
+        GPIOH->ODR = bitRead(DATADRA, 0) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xFFEF)) : GPIOH->ODR;
+        GPIOB->ODR = bitRead(DATADRA, 1) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xF7FF)) : GPIOB->ODR;
+        GPIOD->ODR = bitRead(DATADRA, 2) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xFFBF)) : GPIOD->ODR;
+        GPIOD->ODR = bitRead(DATADRA, 3) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xFFDF)) : GPIOD->ODR;      
+        GPIOI->ODR = bitRead(DATADRA, 4) ? (unsigned short) (0x0000 | (GPIOI->ODR & 0xFDFF)) : GPIOI->ODR;      
+        GPIOH->ODR = bitRead(DATADRA, 5) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xDFFF)) : GPIOH->ODR;      
+        GPIOC->ODR = bitRead(DATADRA, 6) ? (unsigned short) (0x0000 | (GPIOC->ODR & 0xFF7F)) : GPIOC->ODR;      
+        GPIOG->ODR = bitRead(DATADRA, 7) ? (unsigned short) (0x0000 | (GPIOG->ODR & 0xBFFF)) : GPIOG->ODR;
+        DATADRA = data;
+        GPIOH->MODER = bitRead(DATADRA, 0) ? (0x00000100 | (GPIOH->MODER & ~0x00000300)) : (0x00000000 | (GPIOH->MODER & ~0x00000300));
+        GPIOB->MODER = bitRead(DATADRA, 1) ? (0x00400000 | (GPIOB->MODER & ~0x00C00000)) : (0x00000000 | (GPIOB->MODER & ~0x00C00000));
+        GPIOD->MODER = bitRead(DATADRA, 2) ? (0x00001000 | (GPIOD->MODER & ~0x00003000)) : (0x00000000 | (GPIOD->MODER & ~0x00003000));      
+        GPIOD->MODER = bitRead(DATADRA, 3) ? (0x00000400 | (GPIOD->MODER & ~0x00000C00)) : (0x00000000 | (GPIOD->MODER & ~0x00000C00));      
+        GPIOI->MODER = bitRead(DATADRA, 4) ? (0x00040000 | (GPIOI->MODER & ~0x000C0000)) : (0x00000000 | (GPIOI->MODER & ~0x000C0000));      
+        GPIOH->MODER = bitRead(DATADRA, 5) ? (0x04000000 | (GPIOH->MODER & ~0x0C000000)) : (0x00000000 | (GPIOH->MODER & ~0x0C000000));      
+        GPIOC->MODER = bitRead(DATADRA, 6) ? (0x00004000 | (GPIOC->MODER & ~0x0000C000)) : (0x00000000 | (GPIOC->MODER & ~0x0000C000));
+        GPIOG->MODER = bitRead(DATADRA, 7) ? (0x10000000 | (GPIOG->MODER & ~0x30000000)) : (0x00000000 | (GPIOG->MODER & ~0x30000000));
+        break;
+      default:
+        break;
       
-  }
+    }
   
 }
   
