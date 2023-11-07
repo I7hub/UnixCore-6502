@@ -24,15 +24,15 @@
 #define ClockSigIN 2
 #define DataPins 8
 #define PinRW 3
-#define ProgramDIM 18
+#define ProgramDIM 19
 #define IDRPORTJMask 0x007F
 #define IDRPORTGMask 0x2000
 #define MODERPORTJMask 0x00003FFF
 #define MODERPORTGMask 0x0C000000
-#define ODRPORTJMask 0x00FE
-#define ODRPORTGMask 0x0001
+#define ODRPORTJMask 0xFF80
+#define ODRPORTGMask 0xDFFF
 
-const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0xa9, 0xff, 0x8d, 0x00, 0x60, 0xa9, 0x00, 0x8d, 0x02, 0x60, 0x4c, 0x00, 0x80};
+const byte UnixCore6502[ProgramDIM] = {0xa9, 0xff, 0x8d, 0x02, 0x60, 0x20, 0x0b, 0x80, 0x4c, 0x08, 0x80, 0x48, 0xa9, 0x50, 0x8d, 0x00, 0x60, 0x68, 0x60};
 
 const char ADDR_PIN[] = {22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
 const char DATA_PIN[] = {23, 25, 27, 29, 31, 33, 35, 37};
@@ -116,8 +116,8 @@ void RW_mem(unsigned int address, unsigned int reference, byte memblock[]) {
 
   } else if ( RW == 'r' ) {
 
-    GPIOJ->ODR = (unsigned short) (((memblock[offset] & ODRPORTJMask) >> 1) | (GPIOJ->ODR & 0xFF80));
-    GPIOG->ODR = (unsigned short) (((memblock[offset] & ODRPORTGMask) << 13) | (GPIOG->ODR & 0xDFFF));
+    GPIOJ->ODR = (unsigned short) (((memblock[offset] & 0x00FE) >> 1) | (GPIOJ->ODR & ODRPORTJMask));
+    GPIOG->ODR = (unsigned short) (((memblock[offset] & 0x0001) << 13) | (GPIOG->ODR & ODRPORTGMask));
     hexData = (byte) (((GPIOJ->ODR & IDRPORTJMask) << 1) + ((GPIOG->ODR & IDRPORTGMask) >> 13));
     
   }
@@ -241,8 +241,8 @@ void loop() {
     } else if ((address >= 0x8000) && (address <= 0xFFFF)) {
     
       unsigned int offset = address - 0x8000;
-      GPIOJ->ODR = (unsigned short) (((rom[offset] & ODRPORTJMask) >> 1) | (GPIOJ->ODR & 0xFF80));
-      GPIOG->ODR = (unsigned short) (((rom[offset] & ODRPORTGMask) << 13) | (GPIOG->ODR & 0xDFFF));
+      GPIOJ->ODR = (unsigned short) (((rom[offset] & 0x00FE) >> 1) | (GPIOJ->ODR & ODRPORTJMask));
+      GPIOG->ODR = (unsigned short) (((rom[offset] & 0x0001) << 13) | (GPIOG->ODR & ODRPORTGMask));
       hexData = (byte) (((GPIOJ->ODR & IDRPORTJMask) << 1) + ((GPIOG->ODR & IDRPORTGMask) >> 13));
     
     }
