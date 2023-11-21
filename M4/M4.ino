@@ -23,7 +23,7 @@ void reset() {
   digitalWrite(PinRESET, HIGH);
 }
 
-char keyboard_handler() {
+void keyboard_handler(char *c, boolean *ctrl) {
 
   if (keyb.available()) {
 
@@ -38,17 +38,19 @@ char keyboard_handler() {
     _key.rctrl = _key.ralt ? 1 : _key.rctrl;
     _key.ralt = _key.ralt ? 0 : _key.ralt;
 
+    *ctrl = (_key.lctrl | _key.rctrl) ? 1 : 0;
+
     _key.keys[0] = (_key.keys[0] == 0x2d) ? 0x2e : _key.keys[0];
     _key.keys[0] = (_key.keys[0] == 0x2f) ? 0x2a : _key.keys[0];
     _key.keys[0] = (_key.keys[0] == 0x34) ? 0x28 : _key.keys[0];
     _key.keys[0] = (_key.keys[0] == 0x33) ? 0x31 : _key.keys[0];
     _key.keys[0] = (_key.keys[0] == 0x65) ? 0x35 : _key.keys[0];
 
-    return keyb.getAscii(_key);
+    *c = keyb.getAscii(_key);
 
   } else {
 
-    return 0;
+    *c = 0;
     
   }
 
