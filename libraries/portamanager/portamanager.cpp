@@ -1,31 +1,5 @@
 #include "portamanager.h"
 
-unsigned int DATADRA = 0x00;
-
-void MODER_PORTA() {
-
-  byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
-
-  GPIOH->ODR = bitRead(DATADRA, 0) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xFFEF)) : GPIOH->ODR;
-  GPIOB->ODR = bitRead(DATADRA, 1) ? (unsigned short) (0x0000 | (GPIOB->ODR & 0xF7FF)) : GPIOB->ODR;
-  GPIOD->ODR = bitRead(DATADRA, 2) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xFFBF)) : GPIOD->ODR;
-  GPIOD->ODR = bitRead(DATADRA, 3) ? (unsigned short) (0x0000 | (GPIOD->ODR & 0xFFDF)) : GPIOD->ODR;      
-  GPIOI->ODR = bitRead(DATADRA, 4) ? (unsigned short) (0x0000 | (GPIOI->ODR & 0xFDFF)) : GPIOI->ODR;      
-  GPIOH->ODR = bitRead(DATADRA, 5) ? (unsigned short) (0x0000 | (GPIOH->ODR & 0xDFFF)) : GPIOH->ODR;      
-  GPIOC->ODR = bitRead(DATADRA, 6) ? (unsigned short) (0x0000 | (GPIOC->ODR & 0xFF7F)) : GPIOC->ODR;      
-  GPIOG->ODR = bitRead(DATADRA, 7) ? (unsigned short) (0x0000 | (GPIOG->ODR & 0xBFFF)) : GPIOG->ODR;
-  DATADRA = data;
-  GPIOH->MODER = bitRead(data, 0) ? (0x00000100 | (GPIOH->MODER & ~0x00000300)) : (0x00000000 | (GPIOH->MODER & ~0x00000300));
-  GPIOB->MODER = bitRead(data, 1) ? (0x00400000 | (GPIOB->MODER & ~0x00C00000)) : (0x00000000 | (GPIOB->MODER & ~0x00C00000));
-  GPIOD->MODER = bitRead(data, 2) ? (0x00001000 | (GPIOD->MODER & ~0x00003000)) : (0x00000000 | (GPIOD->MODER & ~0x00003000));      
-  GPIOD->MODER = bitRead(data, 3) ? (0x00000400 | (GPIOD->MODER & ~0x00000C00)) : (0x00000000 | (GPIOD->MODER & ~0x00000C00));      
-  GPIOI->MODER = bitRead(data, 4) ? (0x00040000 | (GPIOI->MODER & ~0x000C0000)) : (0x00000000 | (GPIOI->MODER & ~0x000C0000));      
-  GPIOH->MODER = bitRead(data, 5) ? (0x04000000 | (GPIOH->MODER & ~0x0C000000)) : (0x00000000 | (GPIOH->MODER & ~0x0C000000));      
-  GPIOC->MODER = bitRead(data, 6) ? (0x00004000 | (GPIOC->MODER & ~0x0000C000)) : (0x00000000 | (GPIOC->MODER & ~0x0000C000));
-  GPIOG->MODER = bitRead(data, 7) ? (0x10000000 | (GPIOG->MODER & ~0x30000000)) : (0x00000000 | (GPIOG->MODER & ~0x30000000));
-
-}
-
 void OUT_PORTA() {
 
   byte data = (byte) ((GPIOJ->IDR & IDRPORTJMask) << 1) + ((GPIOG->IDR & IDRPORTGMask) >> 13);
@@ -45,21 +19,17 @@ void IN_PORTA() {}
 
 void SETUP_PORTA() {
 
-  pinMode(MODER_PORTA_IRQ,INPUT);
-
   pinMode(OUT_PORTA_IRQ,INPUT);
   pinMode(IN_PORTA_IRQ,INPUT);
 
-  GPIOH->MODER = (0x00000000 | (GPIOH->MODER & ~0x00000300));
-  GPIOB->MODER = (0x00000000 | (GPIOB->MODER & ~0x00C00000));
-  GPIOD->MODER = (0x00000000 | (GPIOD->MODER & ~0x00003000));      
-  GPIOD->MODER = (0x00000000 | (GPIOD->MODER & ~0x00000C00));      
-  GPIOI->MODER = (0x00000000 | (GPIOI->MODER & ~0x000C0000));      
-  GPIOH->MODER = (0x00000000 | (GPIOH->MODER & ~0x0C000000));      
-  GPIOC->MODER = (0x00000000 | (GPIOC->MODER & ~0x0000C000));
-  GPIOG->MODER = (0x00000000 | (GPIOG->MODER & ~0x30000000));
-  
-  attachInterrupt(digitalPinToInterrupt(MODER_PORTA_IRQ), MODER_PORTA, RISING);
+  GPIOH->MODER = bitRead(DATADRA, 0) ? (0x00000100 | (GPIOH->MODER & ~0x00000300)) : (0x00000000 | (GPIOH->MODER & ~0x00000300));
+  GPIOB->MODER = bitRead(DATADRA, 1) ? (0x00400000 | (GPIOB->MODER & ~0x00C00000)) : (0x00000000 | (GPIOB->MODER & ~0x00C00000));
+  GPIOD->MODER = bitRead(DATADRA, 2) ? (0x00001000 | (GPIOD->MODER & ~0x00003000)) : (0x00000000 | (GPIOD->MODER & ~0x00003000));      
+  GPIOD->MODER = bitRead(DATADRA, 3) ? (0x00000400 | (GPIOD->MODER & ~0x00000C00)) : (0x00000000 | (GPIOD->MODER & ~0x00000C00));      
+  GPIOI->MODER = bitRead(DATADRA, 4) ? (0x00040000 | (GPIOI->MODER & ~0x000C0000)) : (0x00000000 | (GPIOI->MODER & ~0x000C0000));      
+  GPIOH->MODER = bitRead(DATADRA, 5) ? (0x04000000 | (GPIOH->MODER & ~0x0C000000)) : (0x00000000 | (GPIOH->MODER & ~0x0C000000));      
+  GPIOC->MODER = bitRead(DATADRA, 6) ? (0x00004000 | (GPIOC->MODER & ~0x0000C000)) : (0x00000000 | (GPIOC->MODER & ~0x0000C000));
+  GPIOG->MODER = bitRead(DATADRA, 7) ? (0x10000000 | (GPIOG->MODER & ~0x30000000)) : (0x00000000 | (GPIOG->MODER & ~0x30000000));
   
   attachInterrupt(digitalPinToInterrupt(OUT_PORTA_IRQ), OUT_PORTA, RISING);
   attachInterrupt(digitalPinToInterrupt(IN_PORTA_IRQ), IN_PORTA, RISING);
