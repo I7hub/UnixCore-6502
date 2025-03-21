@@ -39,7 +39,7 @@ else
 
 fi
 
-vasm -Fbin "$filePath" -o "$binaryFileName" && hexCode=$(hexdump -v -e '1/1 "0x%02x "' "$binaryFileName" | xargs -n 17) || exit 1
+vasm -Fbin -dotdir "$filePath" -o "$binaryFileName" && hexCode=$(hexdump -v -e '1/1 "0x%02x "' "$binaryFileName" | xargs -n 17) || exit 1
 
 echo "The 'code' array in the file '$jsonFileName' will be cleared."
 temporaryJsonData=$(jq '.code = []' ../$jsonFileName)
